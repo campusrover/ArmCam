@@ -8,6 +8,8 @@ import rospy, numpy
 from geometry_msgs.msg import Point
 from std_msgs.msg import Bool, String, Float32
 
+
+
 class SendCommand():
 
 	def __init__(self):
@@ -38,9 +40,11 @@ class SendCommand():
 	
 	# Transform polar coordinates into arm command coordinates
 	def trans_x(self, radius):
-		return self.x_transform_commands[numpy.searchsorted(self.x_transform_bins, radius)]
+		return (self.x_transform_commands[numpy.searchsorted(self.x_transform_bins, radius)])*2
 	def trans_y(self, theta):
-		return 0.1372*theta**3-0.0177*theta**2-0.8057*theta
+		print("Theta: "+ str(theta))
+		return theta + 0.03
+		# return 0.1372*theta**3-0.0177*theta**2-0.8057*theta
 
 	# True if robot has finished moving to loading zone and False otherwise
 	def set_state(self, msg):
@@ -90,14 +94,15 @@ class SendCommand():
 
 	# Return True if arm is capable of picking up the cargo and False otherwise
 	def is_valid_coordinate(self, radius, theta):
-		if ((radius < .09975 or radius > .13609) or (abs(theta)>0.7) or (self.z == 10)):
+		if ((radius < .05975 or radius > .13609) or (abs(theta)>5) ):#or (self.z == 10)):
 			print("invalid coordinates")
 			self.arm_status_publisher.publish("invalid")
+			print(self.z)
 			return False
 		self.arm_status_publisher.publish("valid")
 		return True
 
-	# Calculate the 
+	# Calculate the location of the Cargo based on the sent location.
 	def cargo_point_cb(self, msg):
 
 		if (self.alien_state):	# Calculate only if robot is in position
@@ -139,7 +144,7 @@ class SendCommand():
 				print(f"adjusted: {self.x}, {self.y}")
 				
 				self.pickup()
-				self.drop_cargo()
+				# self.drop_cargo()
 
 
 

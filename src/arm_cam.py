@@ -82,7 +82,7 @@ class ImageProcessor:
 				# print(x, y)
 
 				# Publish the position of the cargo box
-				self.cargo_point_pub.publish(Point(x, y, self.arm_z))
+				self.cargo_point_pub.publish(Point(x, y, -0.14))#self.arm_z))
 
 			else:
 				# Cargo is not in view, publish an invalid z

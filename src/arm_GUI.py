@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 import tkinter #this is the GUI I chose
-# from std_msgs.msg import String, Bool
-# import rospy
-# import rosnode
+from std_msgs.msg import String, Bool
+from geometry_msgs.msg import Point
+import rospy
+import rosnode
 import subprocess
 import time
 import os
@@ -123,11 +124,16 @@ def pubSubmitCoords():
     global inputX,inputY,inputZ,message
     try:
         inputX=float(x_entry.get())
+    except:
+        inputX=0
+    try:
         inputY=float(y_entry.get())
+    except:
+        inputY=0
+    try:
         inputZ=float(z_entry.get())
     except:
-        message="Not Valid Input"
-        updateMessages()
+        inputZ=0
     point_publisher.publish(Point(inputX, inputY, inputZ))
 
 def pubGoSleep():
@@ -146,17 +152,17 @@ def pubSetTime():
     pass
 
 
-# #initalizing rospy stuff 
-# rospy.init_node("GUI")
-# key_pub = rospy.Publisher('keys', String, queue_size=1) #publishes to the same topic as key_publisher.py
-# ui_sub = rospy.Subscriber('UI', String, ui_cb) #recives the information from the robot node in the UI topic
-# arm_subscriber=rospy.Subscriber("arm_status", String, arm_cb)
+#initalizing rospy stuff 
+rospy.init_node("GUI")
+key_pub = rospy.Publisher('keys', String, queue_size=1) #publishes to the same topic as key_publisher.py
+ui_sub = rospy.Subscriber('UI', String, ui_cb) #recives the information from the robot node in the UI topic
+arm_subscriber=rospy.Subscriber("arm_status", String, arm_cb)
 
-# alien_state_publisher = rospy.Publisher("alien_state", Bool, queue_size=1)
-# point_publisher = rospy.Publisher("/arm_control/point", Point, queue_size=1)
-# home_publisher = rospy.Publisher("/arm_control/home", Bool, queue_size=1)
-# sleep_publisher = rospy.Publisher("/arm_control/sleep", Bool, queue_size=1)
-# gripper_publisher = rospy.Publisher("/arm_control/gripper", String, queue_size=1)
+alien_state_publisher = rospy.Publisher("alien_state", Bool, queue_size=1)
+point_publisher = rospy.Publisher("/arm_control/point", Point, queue_size=1)
+home_publisher = rospy.Publisher("/arm_control/home", Bool, queue_size=1)
+sleep_publisher = rospy.Publisher("/arm_control/sleep", Bool, queue_size=1)
+gripper_publisher = rospy.Publisher("/arm_control/gripper", String, queue_size=1)
 # # time_publisher = rospy.Publisher("/arm/time", Float32, queue_size=1) #TODO
 
 
