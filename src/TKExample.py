@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 import tkinter #this is the GUI I chose
+# from std_msgs.msg import String, Bool
+# from geometry_msgs.msg import Point
+# import rospy
+# import rosnode
 import subprocess
 import time
 import os
@@ -39,6 +43,8 @@ def arm_cb(msg):
         message = "Valid Coordinate"
         updateMessages()
 
+def tkinter_entry_cb(event):
+    pass
 
 #creates all the text variables for displaying the robot data
 mode_text=tkinter.StringVar()
@@ -89,24 +95,28 @@ def pack_test():
     label5.pack(side=tkinter.TOP)
 
     #packing frames onto tkinter window
-    frame1.pack(side=tkinter.LEFT, expand=False, fill=tkinter.BOTH)
-    frame2.pack(side=tkinter.LEFT, expand=False, fill=tkinter.BOTH)
-    frame3.pack(side=tkinter.LEFT, expand=False, fill=tkinter.BOTH)
+    frame1.pack(side=tkinter.TOP, expand=False, fill=tkinter.X)
+    frame2.pack(side=tkinter.TOP, expand=True, fill=tkinter.BOTH)
+    frame3.pack(side=tkinter.TOP, expand=True, fill=tkinter.BOTH)
+    frame4.pack(side=tkinter.TOP, expand=False, fill=tkinter.BOTH)
     bigframe.pack(side=tkinter.TOP,expand=True, fill=tkinter.BOTH)
 
 
     #packing buttons onto the frames in a percise order so it looks right
-    x_entry.pack(side=tkinter.TOP, expand=False, fill=tkinter.X)
-    y_entry.pack(side=tkinter.TOP, expand=False, fill=tkinter.X)
-    z_entry.pack(side=tkinter.TOP, expand=False, fill=tkinter.X)
+    x_entry.pack(side=tkinter.LEFT, expand=False, fill=tkinter.X)
+    y_entry.pack(side=tkinter.LEFT, expand=False, fill=tkinter.X)
+    z_entry.pack(side=tkinter.LEFT, expand=False, fill=tkinter.X)
 
-    coords_button.pack(side=tkinter.TOP, expand=True, fill=tkinter.BOTH)
+    coords_button.pack(side=tkinter.LEFT, expand=True, fill=tkinter.BOTH)
 
-    start_button.pack(side=tkinter.TOP, expand=True, fill=tkinter.BOTH)
-    sleep_button.pack(side=tkinter.TOP, expand=True, fill=tkinter.BOTH)
-    home_button.pack(side=tkinter.TOP, expand=True, fill=tkinter.BOTH)
-    open_gripper_button.pack(side=tkinter.TOP, expand=True, fill=tkinter.BOTH)
-    close_gripper_button.pack(side=tkinter.TOP, expand=True, fill=tkinter.BOTH)
+    start_button.pack(side=tkinter.LEFT, expand=True, fill=tkinter.BOTH)
+    sleep_button.pack(side=tkinter.LEFT, expand=True, fill=tkinter.BOTH)
+    home_button.pack(side=tkinter.LEFT, expand=True, fill=tkinter.BOTH)
+    open_gripper_button.pack(side=tkinter.LEFT, expand=True, fill=tkinter.BOTH)
+    close_gripper_button.pack(side=tkinter.LEFT, expand=True, fill=tkinter.BOTH)
+
+    time_entry.pack(side=tkinter.LEFT, expand=False, fill=tkinter.X)
+    time_button.pack(side=tkinter.LEFT, expand=True, fill=tkinter.X)
     # GoGoal.pack(side=tkinter.TOP, expand=True, fill=tkinter.BOTH)
     # back.pack(side=tkinter.TOP, expand=True, fill=tkinter.BOTH)
     # GoHome.pack(side=tkinter.TOP, expand=True, fill=tkinter.BOTH)
@@ -120,13 +130,17 @@ def pubSubmitCoords():
     global inputX,inputY,inputZ,message
     try:
         inputX=float(x_entry.get())
+    except:
+        inputX=0
+    try:
         inputY=float(y_entry.get())
+    except:
+        inputY=0
+    try:
         inputZ=float(z_entry.get())
     except:
-        message="Not Valid Input"
-        updateMessages()
+        inputZ=0
     point_publisher.publish(Point(inputX, inputY, inputZ))
-
 
 def pubGoSleep():
     sleep_publisher.publish(True)
@@ -137,15 +151,29 @@ def pubGoHome():
 def pubOpenGripper():
     gripper_publisher.publish("open")
 
-
 def pubCloseGripper():
     gripper_publisher.publish("close")
 
-
 def pubSetTime():
-    pass
+    try:
+        time_float=float(time_entry.get())
+    except:
+        pass
+    time_publisher.publish(time_float)
+
 
 #initalizing rospy stuff 
+# rospy.init_node("GUI")
+# key_pub = rospy.Publisher('keys', String, queue_size=1) #publishes to the same topic as key_publisher.py
+# ui_sub = rospy.Subscriber('UI', String, ui_cb) #recives the information from the robot node in the UI topic
+# arm_subscriber=rospy.Subscriber("arm_status", String, arm_cb)
+
+# alien_state_publisher = rospy.Publisher("alien_state", Bool, queue_size=1)
+# point_publisher = rospy.Publisher("/arm_control/point", Point, queue_size=1)
+# home_publisher = rospy.Publisher("/arm_control/home", Bool, queue_size=1)
+# sleep_publisher = rospy.Publisher("/arm_control/sleep", Bool, queue_size=1)
+# gripper_publisher = rospy.Publisher("/arm_control/gripper", String, queue_size=1)
+# time_publisher = rospy.Publisher("/arm/time", Float32, queue_size=1) #TODO
 
 
 mode_label=tkinter.Label(root,textvariable=mode_text, width=500)
@@ -172,10 +200,10 @@ frame2=tkinter.Frame(
 frame3=tkinter.Frame(
     bigframe
 )
-
-perm_frame=tkinter.Frame(
-    root
+frame4=tkinter.Frame(
+    bigframe
 )
+
 
 #buttons to press to control the arm
 start_button=tkinter.Button(
@@ -186,55 +214,62 @@ start_button=tkinter.Button(
 )
 
 coords_button=tkinter.Button(
-    frame2,
-    text="Send Coords",
+    frame1,
+    text="Send Coords (X Y Z)",
     bg="light green",
     command=pubSubmitCoords
 )
 
 sleep_button=tkinter.Button(
-    frame3,
+    frame2,
     text="Sleep",
     bg="light green",
     command=pubGoSleep
 )
 
 home_button=tkinter.Button(
-    frame3,
+    frame2,
     text="Home",
     bg="light green",
     command=pubGoHome
 )
 
 open_gripper_button=tkinter.Button(
-    frame1,
+    frame3,
     text="Open Gripper",
     bg="red",
     command=pubOpenGripper
 )
 
 close_gripper_button=tkinter.Button(
-    frame1,
+    frame3,
     text="Close Gripper",
     bg="grey",
     command=pubCloseGripper
 )
 
+time_entry=tkinter.Entry(
+    frame4
+)
+
 time_button=tkinter.Button(
-    frame1,
-    text="set Time",
+    frame4,
+    text="Set Time Scale",
     bg="grey",
     command=pubSetTime
 )
 
 x_entry=tkinter.Entry(
-    frame1
+    frame1,
+    width=10
 )
 y_entry=tkinter.Entry(
-    frame2
+    frame1,
+    width=10
 )
 z_entry=tkinter.Entry(
-    frame3
+    frame1,
+    width=10
 )
 
 
