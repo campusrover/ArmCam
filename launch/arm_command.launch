@@ -16,6 +16,6 @@
         <param name="height_pixels" value="480" />
         <param name="width_phys" value="0.228" />
         <param name="height_phys" value="0.181" />
-        <param name="arm_z" value="-0.06" />
+        <param name="arm_z" value="-0.14" />
     </node>
 </launch>

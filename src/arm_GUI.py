@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import tkinter #this is the GUI I chose
-from std_msgs.msg import String, Bool
+from std_msgs.msg import String, Bool, Float32, Int16MultiArray
 from geometry_msgs.msg import Point
 import rospy
 import rosnode
@@ -11,9 +11,6 @@ import signal
 
 
 widgets=[]
-screen1=[]
-screen2=[]
-screen3=[]
 
 inputX=0
 inputY=0
@@ -43,6 +40,8 @@ def arm_cb(msg):
         message = "Valid Coordinate"
         updateMessages()
 
+def tkinter_entry_cb(event):
+    pass
 
 #creates all the text variables for displaying the robot data
 mode_text=tkinter.StringVar()
@@ -79,6 +78,7 @@ def updateMessages():
         text5.set(" ")
 
 def pack_test():
+    killOpenTerminal()
     for i in widgets:
         i.pack_forget()
     mode_text.set("Arm Control")
@@ -93,27 +93,97 @@ def pack_test():
     label5.pack(side=tkinter.TOP)
 
     #packing frames onto tkinter window
-    frame1.pack(side=tkinter.LEFT, expand=False, fill=tkinter.BOTH)
-    frame2.pack(side=tkinter.LEFT, expand=False, fill=tkinter.BOTH)
-    frame3.pack(side=tkinter.LEFT, expand=False, fill=tkinter.BOTH)
+    frame1.pack(side=tkinter.TOP, expand=False, fill=tkinter.X)
+    frame2.pack(side=tkinter.TOP, expand=True, fill=tkinter.BOTH)
+    frame3.pack(side=tkinter.TOP, expand=True, fill=tkinter.BOTH)
+    frame4.pack(side=tkinter.TOP, expand=False, fill=tkinter.BOTH)
     bigframe.pack(side=tkinter.TOP,expand=True, fill=tkinter.BOTH)
+    
+    
+    perma_frame.pack(side=tkinter.TOP,expand=False,fill=tkinter.X)
+    go_to_test.pack(side=tkinter.LEFT,expand=True,fill=tkinter.X)
+    go_to_color_test.pack(side=tkinter.LEFT,expand=True,fill=tkinter.X)
+    go_to_tuner.pack(side=tkinter.LEFT,expand=True,fill=tkinter.X)
 
 
     #packing buttons onto the frames in a percise order so it looks right
-    x_entry.pack(side=tkinter.TOP, expand=False, fill=tkinter.X)
-    y_entry.pack(side=tkinter.TOP, expand=False, fill=tkinter.X)
-    z_entry.pack(side=tkinter.TOP, expand=False, fill=tkinter.X)
+    x_entry.pack(side=tkinter.LEFT, expand=False, fill=tkinter.X)
+    y_entry.pack(side=tkinter.LEFT, expand=False, fill=tkinter.X)
+    z_entry.pack(side=tkinter.LEFT, expand=False, fill=tkinter.X)
 
-    coords_button.pack(side=tkinter.TOP, expand=True, fill=tkinter.BOTH)
+    coords_button.pack(side=tkinter.LEFT, expand=True, fill=tkinter.BOTH)
 
-    start_button.pack(side=tkinter.TOP, expand=True, fill=tkinter.BOTH)
-    sleep_button.pack(side=tkinter.TOP, expand=True, fill=tkinter.BOTH)
-    home_button.pack(side=tkinter.TOP, expand=True, fill=tkinter.BOTH)
-    open_gripper_button.pack(side=tkinter.TOP, expand=True, fill=tkinter.BOTH)
-    close_gripper_button.pack(side=tkinter.TOP, expand=True, fill=tkinter.BOTH)
+    start_button.pack(side=tkinter.LEFT, expand=True, fill=tkinter.BOTH)
+    sleep_button.pack(side=tkinter.LEFT, expand=True, fill=tkinter.BOTH)
+    home_button.pack(side=tkinter.LEFT, expand=True, fill=tkinter.BOTH)
+    open_gripper_button.pack(side=tkinter.LEFT, expand=True, fill=tkinter.BOTH)
+    close_gripper_button.pack(side=tkinter.LEFT, expand=True, fill=tkinter.BOTH)
+
+    time_entry.pack(side=tkinter.LEFT, expand=False, fill=tkinter.X)
+    time_entry.delete(0,500)
+    time_entry.insert(0,"1")
+    time_button.pack(side=tkinter.LEFT, expand=True, fill=tkinter.X)
     # GoGoal.pack(side=tkinter.TOP, expand=True, fill=tkinter.BOTH)
     # back.pack(side=tkinter.TOP, expand=True, fill=tkinter.BOTH)
     # GoHome.pack(side=tkinter.TOP, expand=True, fill=tkinter.BOTH)
+
+def pack_color_test():
+    killOpenTerminal()
+    openTestCamera()
+    for i in widgets:
+        i.pack_forget()
+    mode_text.set("Color Mask Tester")
+
+    mode_label.pack(side=tkinter.TOP)
+
+    color_label1.pack(side=tkinter.TOP,expand=False,fill=tkinter.X)
+    
+    color_frame1.pack(side=tkinter.TOP, expand=False, fill=tkinter.BOTH)
+    
+    color_label2.pack(side=tkinter.TOP,expand=False,fill=tkinter.X)
+    
+    color_frame2.pack(side=tkinter.TOP, expand=False, fill=tkinter.BOTH)
+    color_frame3.pack(side=tkinter.TOP, expand=False, fill=tkinter.BOTH)
+
+    r_entry1.pack(side=tkinter.LEFT, expand=True, fill=tkinter.X)
+    g_entry1.pack(side=tkinter.LEFT, expand=True, fill=tkinter.X)
+    b_entry1.pack(side=tkinter.LEFT, expand=True, fill=tkinter.X)
+    
+    r_entry2.pack(side=tkinter.LEFT, expand=True, fill=tkinter.X)
+    g_entry2.pack(side=tkinter.LEFT, expand=True, fill=tkinter.X)
+    b_entry2.pack(side=tkinter.LEFT, expand=True, fill=tkinter.X)
+
+    color_button.pack(side=tkinter.TOP, expand=True, fill=tkinter.BOTH)
+
+
+    
+
+    perma_frame.pack(side=tkinter.TOP,expand=False,fill=tkinter.X)
+
+def pack_tuning():
+    killOpenTerminal()
+    for i in widgets:
+        i.pack_forget()
+    mode_text.set("Tuning Arm Camera\n\n")
+    pubGoSleep()
+    pubOpenGripper()
+    
+
+    mode_label.pack(side=tkinter.TOP)
+
+
+    frame1.pack(side=tkinter.TOP, expand=False, fill=tkinter.X)
+    bigframe.pack(side=tkinter.TOP,expand=True, fill=tkinter.BOTH)
+
+    x_entry.pack(side=tkinter.LEFT, expand=False, fill=tkinter.X)
+    y_entry.pack(side=tkinter.LEFT, expand=False, fill=tkinter.X)
+    z_entry.pack(side=tkinter.LEFT, expand=False, fill=tkinter.X)
+
+    coords_button.pack(side=tkinter.LEFT, expand=True, fill=tkinter.BOTH)
+
+
+    perma_frame.pack(side=tkinter.TOP,expand=False,fill=tkinter.X)
+
 
 
 #All functions that are called by pressing GUI buttons
@@ -149,7 +219,32 @@ def pubCloseGripper():
     gripper_publisher.publish("close")
 
 def pubSetTime():
-    pass
+    try:
+        time_float=float(time_entry.get())
+    except:
+        pass
+    time_publisher.publish(time_float)
+
+def pubSetColor():
+    color_string=""
+    color_string+=r_entry1.get()+","+g_entry1.get()+","+b_entry1.get()+"-"+r_entry2.get()+","+g_entry2.get()+","+b_entry2.get()
+    color_publisher.publish(color_string)
+
+
+#terminal commands
+process=subprocess
+def killOpenTerminal():
+    global process
+    try:
+        os.killpg(os.getpgid(process.pid),signal.SIGTERM)
+    except:
+        pass
+def openTestCamera():
+    global process
+    command="rosrun armcam color_mask_test.py"
+    process=subprocess.Popen(command, shell=True,preexec_fn=os.setsid)
+
+
 
 
 #initalizing rospy stuff 
@@ -163,7 +258,9 @@ point_publisher = rospy.Publisher("/arm_control/point", Point, queue_size=1)
 home_publisher = rospy.Publisher("/arm_control/home", Bool, queue_size=1)
 sleep_publisher = rospy.Publisher("/arm_control/sleep", Bool, queue_size=1)
 gripper_publisher = rospy.Publisher("/arm_control/gripper", String, queue_size=1)
-# # time_publisher = rospy.Publisher("/arm/time", Float32, queue_size=1) #TODO
+time_publisher = rospy.Publisher("/arm/time", Float32, queue_size=1)
+
+color_publisher=rospy.Publisher("color_array",String,queue_size=1)
 
 
 mode_label=tkinter.Label(root,textvariable=mode_text, width=500)
@@ -178,6 +275,29 @@ label5=tkinter.Label(root,textvariable=text5, width=500)
 
 
 #frames to orgranize buttons
+perma_frame=tkinter.Frame(
+    root
+)
+go_to_test=tkinter.Button(
+    perma_frame,
+    text="Controls",
+    bg="grey",
+    command=pack_test
+)
+go_to_color_test=tkinter.Button(
+    perma_frame,
+    text="Color Test",
+    bg="grey",
+    command=pack_color_test
+)
+
+go_to_tuner=tkinter.Button(
+    perma_frame,
+    text="Tuning",
+    bg="grey",
+    command=pack_tuning
+)
+
 bigframe=tkinter.Frame(
     root
 )
@@ -190,8 +310,23 @@ frame2=tkinter.Frame(
 frame3=tkinter.Frame(
     bigframe
 )
+frame4=tkinter.Frame(
+    bigframe
+)
 
-perm_frame=tkinter.Frame(
+
+
+color_frame1=tkinter.Frame(
+    root
+)
+color_label1=tkinter.Label(root,text="\nColor Upper Bound (RGB)", width=500)
+
+color_frame2=tkinter.Frame(
+    root
+)
+color_label2=tkinter.Label(root,text="\n\nColor Lower Bound (RGB)", width=500)
+
+color_frame3=tkinter.Frame(
     root
 )
 
@@ -204,56 +339,100 @@ start_button=tkinter.Button(
 )
 
 coords_button=tkinter.Button(
-    frame2,
-    text="Send Coords",
-    bg="light green",
+    frame1,
+    text="Send Coords (X Y Z)",
+    bg="green",
     command=pubSubmitCoords
 )
 
 sleep_button=tkinter.Button(
-    frame3,
+    frame2,
     text="Sleep",
     bg="light green",
     command=pubGoSleep
 )
 
 home_button=tkinter.Button(
-    frame3,
+    frame2,
     text="Home",
     bg="light green",
     command=pubGoHome
 )
 
 open_gripper_button=tkinter.Button(
-    frame1,
+    frame3,
     text="Open Gripper",
-    bg="red",
+    bg="#FF4500",
     command=pubOpenGripper
 )
 
 close_gripper_button=tkinter.Button(
-    frame1,
+    frame3,
     text="Close Gripper",
-    bg="grey",
+    bg="#FF4500",
     command=pubCloseGripper
 )
 
+time_entry=tkinter.Entry(
+    frame4,
+    justify=tkinter.CENTER
+)
+
 time_button=tkinter.Button(
-    frame1,
-    text="set Time",
+    frame4,
+    text="Set Time Scale",
     bg="grey",
     command=pubSetTime
 )
 
 x_entry=tkinter.Entry(
-    frame1
+    frame1,
+    width=10
 )
 y_entry=tkinter.Entry(
-    frame2
+    frame1,
+    width=10
 )
 z_entry=tkinter.Entry(
-    frame3
+    frame1,
+    width=10
 )
+
+r_entry1=tkinter.Entry(
+    color_frame1,
+    width=10
+)
+g_entry1=tkinter.Entry(
+    color_frame1,
+    width=10
+)
+b_entry1=tkinter.Entry(
+    color_frame1,
+    width=10
+)
+r_entry2=tkinter.Entry(
+    color_frame2,
+    width=10
+)
+g_entry2=tkinter.Entry(
+    color_frame2,
+    width=10
+)
+b_entry2=tkinter.Entry(
+    color_frame2,
+    width=10
+)
+
+color_button=tkinter.Button(
+    color_frame3,
+    text="Set Color Arrays",
+    bg="light green",
+    command=pubSetColor
+)
+
+
+
+
 
 
 widgets.append(mode_label)
@@ -265,10 +444,6 @@ widgets.append(label5)
 widgets.append(x_entry)
 widgets.append(y_entry)
 widgets.append(z_entry)
-for i in widgets:
-    screen1.append(i)
-    screen2.append(i)
-    screen3.append(i)
 widgets.append(start_button)
 widgets.append(coords_button)
 widgets.append(sleep_button)
@@ -280,9 +455,28 @@ widgets.append(frame2)
 widgets.append(frame3)
 widgets.append(time_button)
 widgets.append(bigframe)
+widgets.append(color_frame1)
+widgets.append(color_frame2)
+widgets.append(color_frame3)
+widgets.append(color_label1)
+widgets.append(color_label2)
+widgets.append(r_entry1)
+widgets.append(r_entry2)
+widgets.append(g_entry1)
+widgets.append(g_entry2)
+widgets.append(b_entry1)
+widgets.append(b_entry2)
+widgets.append(perma_frame)
+widgets.append(time_entry)
+widgets.append(time_button)
+widgets.append(frame4)
+widgets.append(color_button)
+
 
 
 pack_test()
 
 
 root.mainloop() #tktiner mainloop
+sleep_publisher.publish(True)
+killOpenTerminal()

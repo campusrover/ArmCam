@@ -8,7 +8,7 @@ from std_msgs.msg import Bool, String, Float32
 
 # if your paths are messed up and not recognizing the interbotix_ws, 
 # then you can use this to get the directory working with this file
-sys.path.insert(0, '/my_ros_data/interbotix_ws/')
+sys.path.insert(0, '/ros-lab/interbotix_ws/')
 # sys.path.insert(0, '/my_ros_data/interbotix_ws/')
 
 
@@ -95,8 +95,15 @@ class ArmControl():
         # this means that the y coordinate is processed differently than the x and y coordinates 
         # the y coordinate is an absolute position which means the 0.3 will always return the same position 
         if self.y != prev_y: 
-            rospy.loginfo("moving waist to {}".format(self.y))
-            self.bot.arm.set_single_joint_position("waist", self.y)
+            if(self.y<-2.7): #Set min and max rotation to avoid hitting the pole
+                rospy.loginfo("moving waist to {}".format(-2.7))
+                self.bot.arm.set_single_joint_position("waist", -2.7)
+            elif self.y>2.7:
+                rospy.loginfo("moving waist to {}".format(2.7))
+                self.bot.arm.set_single_joint_position("waist", 2.7)
+            else:
+                rospy.loginfo("moving waist to {}".format(self.y))
+                self.bot.arm.set_single_joint_position("waist", self.y)
         # x and z are relative coordinates. If the initial x position of the arm is 0.1, then if the command received is 0.1
         # the new x position will be 0.2. Same with z.
         if self.x or self.z != 0: 
