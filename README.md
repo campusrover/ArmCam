@@ -17,7 +17,7 @@ The PX-100 Arm was a nightmare to use. This project aims to simplify and standar
 If you are in the lab, make sure to use either of the laptops that are marked with pink tape and say "Works with the arm." 
 If you use on of these arms, skip the "Running the Code" Section.
 
-If you want to setup a new laptop for use with the arm, here is the cliff notes version of the setup:
+If you want to setup a new laptop for use with the arm, here is the cliff notes version of the setup. For more in depth instructions, look at the setup instructions in the Lab Notebook [INSERT LINK] for setting up a new laptop, as well as the instructions here [Insert Link] for setting up the Interbotix Workspace.
 >[!WARNING]
 >I would highly recommend using one of the already working laptops. Some laptops simply do not have compatible hardware with the PX-100 arm and therefore will not work, and you will not know this until you've already spent hours setting up the laptop.
 That being said, the issue with hardware compatibility can be fixed by replacing the U2D2 Controller in the arm with a new one from Trossen Robotics. 
