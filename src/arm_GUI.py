@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import tkinter #this is the GUI I chose
-from std_msgs.msg import String, Bool, Float32, Int16MultiArray
+from std_msgs.msg import String, Bool, Float32
 from geometry_msgs.msg import Point
 import rospy
 import rosnode
@@ -9,29 +9,30 @@ import time
 import os
 import signal
 
+"""========================================================================================="""
+#Initialize some needed variables
+widgets=[] #Holds all tkinter widgets, used to clear the screen
 
-widgets=[]
-
+#These hold the 3 numbers inputed by the user
 inputX=0
 inputY=0
 inputZ=0
-
-"""CargobotGUI"""
 
 root=tkinter.Tk() #init window
 root.wm_title("Control Panel") #set window name
 root.geometry("500x600") #set size of window
 
+"""========================================================================================="""
+
+#All rospy callbacks
 message=" "
-def ui_cb(msg): #recives string from robot node
+def ui_cb(msg): #recives string from other nodes
     global message
     message=str(msg.data)
     updateMessages()
 
-def state_cb(msg):
-    key_pub.publish("gh")
 
-def arm_cb(msg):
+def arm_cb(msg): #a callback from data about the arm
     global message
     if (msg.data=="invalid"):
         message = "Invalid Coordinate"
@@ -40,9 +41,7 @@ def arm_cb(msg):
         message = "Valid Coordinate"
         updateMessages()
 
-def tkinter_entry_cb(event):
-    pass
-
+"""========================================================================================="""
 #creates all the text variables for displaying the robot data
 mode_text=tkinter.StringVar()
 mode_text.set("Mode 1")
@@ -58,10 +57,11 @@ text4.set(" ")
 text5=tkinter.StringVar()
 text5.set(" ")
 
+"""========================================================================================="""
+#All needed functions for the GUI
 
-#updates all the text for robot data
+#updates all the text
 def updateMessages():
-    # print(("/robot") in rosnode.get_node_names())
     if message!=" ":
         text1.set(message)
         # wordList=message.split("\n")
@@ -71,21 +71,22 @@ def updateMessages():
         # text4.set(wordList[3])
         # text5.set(wordList[4])
     else:
-        text1.set("Please Start Main Node")
+        text1.set("Please Start Main Node") #If no data is recieved, it tells you to start the main node
         text2.set(" ")
         text3.set(" ")
         text4.set(" ")
         text5.set(" ")
 
+#Packs the standard control window onto the window
 def pack_test():
-    killOpenTerminal()
-    for i in widgets:
+    killOpenTerminal() #Close any open terminals created by the UI
+    for i in widgets: #removes all current widgets from the window
         i.pack_forget()
-    mode_text.set("Arm Control")
+    mode_text.set("Arm Control") #changes the name of the window
 
     mode_label.pack(side=tkinter.TOP)
 
-    #creating labels to display robot data
+    #creating labels to display data
     label1.pack(side=tkinter.TOP)
     label2.pack(side=tkinter.TOP)
     label3.pack(side=tkinter.TOP)
@@ -103,7 +104,7 @@ def pack_test():
     perma_frame.pack(side=tkinter.TOP,expand=False,fill=tkinter.X)
     go_to_test.pack(side=tkinter.LEFT,expand=True,fill=tkinter.X)
     go_to_color_test.pack(side=tkinter.LEFT,expand=True,fill=tkinter.X)
-    go_to_tuner.pack(side=tkinter.LEFT,expand=True,fill=tkinter.X)
+    # go_to_tuner.pack(side=tkinter.LEFT,expand=True,fill=tkinter.X)
 
 
     #packing buttons onto the frames in a percise order so it looks right
@@ -120,16 +121,14 @@ def pack_test():
     close_gripper_button.pack(side=tkinter.LEFT, expand=True, fill=tkinter.BOTH)
 
     time_entry.pack(side=tkinter.LEFT, expand=False, fill=tkinter.X)
-    time_entry.delete(0,500)
-    time_entry.insert(0,"1")
+    time_entry.delete(0,500) #Clears the text entry 
+    time_entry.insert(0,"1") #Adds a 1 to it
     time_button.pack(side=tkinter.LEFT, expand=True, fill=tkinter.X)
-    # GoGoal.pack(side=tkinter.TOP, expand=True, fill=tkinter.BOTH)
-    # back.pack(side=tkinter.TOP, expand=True, fill=tkinter.BOTH)
-    # GoHome.pack(side=tkinter.TOP, expand=True, fill=tkinter.BOTH)
 
+#Clears the window and then loads the window for color testing
 def pack_color_test():
     killOpenTerminal()
-    openTestCamera()
+    openTestCamera() #Runs the command to open a seperate terminal to run a different node
     for i in widgets:
         i.pack_forget()
     mode_text.set("Color Mask Tester")
@@ -160,11 +159,11 @@ def pack_color_test():
 
     perma_frame.pack(side=tkinter.TOP,expand=False,fill=tkinter.X)
 
-def pack_tuning():
+def pack_tuning(): #Mostly empty, a starter example, not used
     killOpenTerminal()
     for i in widgets:
         i.pack_forget()
-    mode_text.set("Tuning Arm Camera\n\n")
+    mode_text.set("Example Window\n\n")
     pubGoSleep()
     pubOpenGripper()
     
@@ -187,6 +186,7 @@ def pack_tuning():
 
 
 #All functions that are called by pressing GUI buttons
+
 def pubStartArm():
     alien_state_publisher.publish(True)
 
@@ -233,20 +233,20 @@ def pubSetColor():
 
 #terminal commands
 process=subprocess
-def killOpenTerminal():
+def killOpenTerminal(): #This allows the node to close any terminals it opened
     global process
     try:
         os.killpg(os.getpgid(process.pid),signal.SIGTERM)
     except:
         pass
-def openTestCamera():
+
+def openTestCamera():#Runs the command as a subprocess in a way that it can later be ended
     global process
     command="rosrun armcam color_mask_test.py"
     process=subprocess.Popen(command, shell=True,preexec_fn=os.setsid)
 
 
-
-
+"""========================================================================================="""
 #initalizing rospy stuff 
 rospy.init_node("GUI")
 key_pub = rospy.Publisher('keys', String, queue_size=1) #publishes to the same topic as key_publisher.py
@@ -262,6 +262,8 @@ time_publisher = rospy.Publisher("/arm/time", Float32, queue_size=1)
 
 color_publisher=rospy.Publisher("color_array",String,queue_size=1)
 
+"""========================================================================================="""
+#Making all widgets
 
 mode_label=tkinter.Label(root,textvariable=mode_text, width=500)
 label1=tkinter.Label(root,textvariable=text1, width=500)
@@ -270,11 +272,7 @@ label3=tkinter.Label(root,textvariable=text3, width=500)
 label4=tkinter.Label(root,textvariable=text4, width=500)
 label5=tkinter.Label(root,textvariable=text5, width=500)
 
-
-
-
-
-#frames to orgranize buttons
+#Permanent buttons at the bottom of the screen
 perma_frame=tkinter.Frame(
     root
 )
@@ -290,7 +288,6 @@ go_to_color_test=tkinter.Button(
     bg="grey",
     command=pack_color_test
 )
-
 go_to_tuner=tkinter.Button(
     perma_frame,
     text="Tuning",
@@ -298,6 +295,7 @@ go_to_tuner=tkinter.Button(
     command=pack_tuning
 )
 
+#Frames to organize the standard window
 bigframe=tkinter.Frame(
     root
 )
@@ -314,8 +312,7 @@ frame4=tkinter.Frame(
     bigframe
 )
 
-
-
+#Frames to organize the color testing window
 color_frame1=tkinter.Frame(
     root
 )
@@ -398,6 +395,7 @@ z_entry=tkinter.Entry(
     width=10
 )
 
+#Widgets for the Color Tuning Window
 r_entry1=tkinter.Entry(
     color_frame1,
     width=10
@@ -431,10 +429,13 @@ color_button=tkinter.Button(
 )
 
 
+"""========================================================================================="""
 
 
-
-
+"""
+In order to clear a window, you need to reference all the widgets that could be on that window
+I was lazy and just made one massive list that the program runs through to hit every possible widget
+"""
 widgets.append(mode_label)
 widgets.append(label1)
 widgets.append(label2)
@@ -472,11 +473,13 @@ widgets.append(time_button)
 widgets.append(frame4)
 widgets.append(color_button)
 
+"""========================================================================================="""
+pack_test()#loads the standard control window first
 
 
-pack_test()
+root.mainloop() #tktiner mainloop, needed to render and upate the window with any changes
 
+#Anything below this will only be run after the window is closed
 
-root.mainloop() #tktiner mainloop
-sleep_publisher.publish(True)
-killOpenTerminal()
+sleep_publisher.publish(True) #Returns the arm to sleep position
+killOpenTerminal()#Closes open terminals created by this node

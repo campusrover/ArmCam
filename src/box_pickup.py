@@ -4,7 +4,7 @@ A basic ROS command line controller for the Interbotix PX100 Arm.
 Run the program, read the README or code, to find more details about the commands
 """
 
-import rospy, numpy
+import rospy, math
 from geometry_msgs.msg import Point
 from std_msgs.msg import Bool, String, Float32
 
@@ -18,17 +18,25 @@ class SendCommand():
 		self.x = 0 
 		self.y = 0
 		self.z = 0
-		
-		# Radius conversion to arm command
-		#TUNE X VALUE HERE
-		# self.x_transform_bins = [0.10403, 0.10855, 0.11395, 0.11774, 0.12060, 0.12629, 0.13075, 0.13609]
-		# self.x_transform_commands = [-.03, -.02, -.01, 0, .01, .02, .03, 0.3]
 
-		self.x_transform_bins = [0.12586239441529984, 0.12547608196136867, 0.12469001512208965, 0.12417749089816964, 0.12338487943277329, 0.12264905888644348, 0.1223617849177798, 0.1218748410671374, 0.12326480691314308, 0.12263351019739444, 0.12323898809114865, 0.12298769140960815]
-		self.x_transform_commands = [-0.05, -0.04, -0.03, -0.02, -0.01, 0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06]
+		self.arm_x=0
+		self.arm_y=0
+
+		self.current_x=0
+		self.current_y=0
+		self.current_z=0
+
+		self.at_height=False
+
+		self.old_box_x=0
+		self.old_box_y=0
+
+		self.state="waiting"
 		
+
 		# Cargo's physical coordinates
 		self.cargo_point_sub = rospy.Subscriber("cargo_point", Point, self.cargo_point_cb)
+		self.arm_point_sub=rospy.Subscriber("arm_point", Point, self.arm_point_cb)
 
 		# Coordinate with the transportation robot
 		self.alien_state_sub = rospy.Subscriber("alien_state", Bool, self.set_state)
@@ -42,38 +50,9 @@ class SendCommand():
 		self.sleep_publisher = rospy.Publisher("/arm_control/sleep", Bool, queue_size=1)
 		self.gripper_publisher = rospy.Publisher("/arm_control/gripper", String, queue_size=1)
 	
-	# Transform polar coordinates into arm command coordinates
-	def trans_x(self, radius):
-		return (self.x_transform_commands[numpy.searchsorted(self.x_transform_bins, radius)])*2
-	def trans_y(self, theta):
-		print("Theta: "+ str(theta))
-		return theta+0.35 #TUNE Y VALUE HERE
-		# return 0.1372*theta**3-0.0177*theta**2-0.8057*theta
-
 	# True if robot has finished moving to loading zone and False otherwise
 	def set_state(self, msg):
 		self.alien_state = msg.data
-
-	# Pick up cargo with given coordinates
-	def pickup(self):
-			self.arm_status_publisher.publish("grabcube")
-			rospy.sleep(1.5)
-			self.home_publisher.publish(True)
-			rospy.sleep(1.5)
-			self.gripper_publisher.publish("open")
-			rospy.sleep(1.5)
-			self.point_publisher.publish(Point(0, self.y, 0))
-			rospy.sleep(3)
-			self.point_publisher.publish(Point(self.x, self.y, 0))
-			rospy.sleep(3)
-			self.point_publisher.publish(Point(0, self.y, self.z))
-			rospy.sleep(3)
-			self.gripper_publisher.publish("close")
-			rospy.sleep(1.5)
-			self.point_publisher.publish(Point(0, self.y, -self.z + .01))
-			rospy.sleep(1.5)
-			self.home_publisher.publish(True)
-			rospy.sleep(1.5)
 
 	# Drop cargo to preset destination zone
 	def drop_cargo(self):
@@ -96,63 +75,95 @@ class SendCommand():
 			self.gripper_publisher.publish("close")
 			self.arm_status_publisher.publish("resting")
 
-	# Return True if arm is capable of picking up the cargo and False otherwise
-	def is_valid_coordinate(self, radius, theta):
-		# if ((radius < .05975 or radius > .13609) or (abs(theta)>5) ):#or (self.z == 10)):
-		# 	print("invalid coordinates")
-		# 	self.arm_status_publisher.publish("invalid")
-		# 	print(self.z)
-		# 	return False
-		self.arm_status_publisher.publish("valid")
-		return True
+
+
+	def arm_point_cb(self,msg):
+		self.arm_x=msg.x
+		self.arm_y=msg.y
+
+		
 
 	# Calculate the location of the Cargo based on the sent location.
 	def cargo_point_cb(self, msg):
+		if(self.at_height==False and self.alien_state==True and self.state=="waiting"):
+			self.state="setting_height"
+			if(self.old_box_x==0):
+				self.old_box_x=msg.x
+				self.old_box_y=msg.y
 
-		# r = numpy.sqrt(msg.x**2 + msg.y**2)
-		# t = numpy.arctan2(msg.y, msg.x)
-		# print(self.trans_y(t))
+			self.home_publisher.publish(True)
+			rospy.sleep(4)
+			self.gripper_publisher.publish("open")
+			rospy.sleep(1.5)
+			self.point_publisher.publish(Point(0,0,-0.1))
+			rospy.sleep(4)
+			self.point_publisher.publish(Point(-0.05,0,0))
+			rospy.sleep(4)
 
-		if (self.alien_state):	# Calculate only if robot is in position
-			self.alien_state = False	# Only perform one calculation per cycle
-			x = msg.x
-			y = msg.y-0.0739083	# Shift so that arm is at (0,0)
-			self.z = msg.z      # No conversion necessary
 
-			# Convert to polar
-			r = numpy.sqrt(x**2 + y**2)
-			t = numpy.arctan2(y, x)
 
-			print(f"radius: {r} theta: {t}")
+			self.at_height=True
+			self.state="moving"
 
-			# Transform polar coordinates to arm command coordinates
-			if (self.is_valid_coordinate(r, t)):
-				self.x = self.trans_x(r)
-				self.y = self.trans_y(t)
-				print(f"original: {self.x}, {self.y}")
+		if (self.alien_state and self.state=="moving"):	# Calculate only if robot is in position
 
-				# Adjust for orientation of cube
-				if abs(self.y) > 0.01:
-					if self.y < 0:
-						if self.y > -0.2:
-							self.y += .03
-						elif self.y > -0.4:
-							self.y += .09
-						else:
-							self.y += .1
-					else:
-						if self.y < 0.2:
-							self.y -= .03
-						elif self.y < 0.4:
-							self.y -= .08
-						elif self.y < 0.5:
-							self.y -= .14
-						else:
-							self.y += .23	
-				print(f"adjusted: {self.x}, {self.y}")
+			if(self.arm_y!=0 and self.arm_x!=0):
 				
-				# self.pickup()
-				# self.drop_cargo()
+				flags=0
+				# distance=math.sqrt( ((self.arm_x-self.old_box_x)**2)+((self.arm_y-self.old_box_x)**2))
+				# print("Distance: "+str(distance))
+				# print("X: "+str(self.old_box_x-self.arm_x))
+				# print("Y: "+str(y-self.arm_y))
+				
+				if (abs(self.old_box_x-self.arm_x)<=6):
+					flags+=1
+				elif(self.old_box_x>self.arm_x):
+					self.current_y-=0.02
+				elif(self.old_box_x<self.arm_x):
+					self.current_y+=0.02
+
+				
+				if (abs((self.old_box_y)-self.arm_y)<=10):
+					self.current_x=0
+					flags+=1
+				elif(self.old_box_y>self.arm_y):
+					self.current_x-=0.01
+				elif(self.old_box_y<self.arm_y):
+					self.current_x+=0.01
+
+				if(flags==2):
+					self.state="descending"
+				else:
+					self.point_publisher.publish(Point(self.current_x,self.current_y,0))
+					self.current_x=0
+					rospy.sleep(2)
+
+		elif self.state=="descending" and self.alien_state:
+			if(abs(self.current_y>0.2)):
+				if(self.current_y<0):
+					self.current_y+=0.03
+				else:
+					self.current_y-=0.03
+			self.point_publisher.publish(Point(0,self.current_y,-0.01))
+			rospy.sleep(5)
+
+			self.point_publisher.publish(Point(0,self.current_y,-0.03))
+			rospy.sleep(5)
+
+			
+			self.gripper_publisher.publish("close")
+			rospy.sleep(1.5)
+			self.sleep_publisher.publish(True)
+			self.alien_state=False
+			self.at_height=False
+			self.current_y=0
+			self.alien_state = False 
+
+			self.old_box_x=0
+			self.old_box_y=0
+			self.state="waiting"
+
+
 
 
 

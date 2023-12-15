@@ -103,15 +103,8 @@ class ImageProcessor:
 			x = x_pixels*self.width_ratio
 			y = y_pixels*self.height_ratio
 
-			# print(x, y)
-
-			# Publish the position of the cargo box
-			# self.cargo_point_pub.publish(Point(x, y, -0.14))#self.arm_z))
-
 		else:
 			pass
-			# Cargo is not in view, publish an invalid z
-			# self.cargo_point_pub.publish(Point(0, 0, 10))
 
 		cv2.imshow("masked image", masked)
 		# cv2.imshow("image", croppedimage)

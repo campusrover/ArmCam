@@ -9,16 +9,8 @@ from geometry_msgs.msg import Point
 class ImageProcessor:
 	
 	def __init__(self):
-		#Positions for the arm at the home position, but with a z of -0.14
-		#Determined through an upsetting amount of trial and error
-		self.arm_initial_x=342
-		self.arm_initial_y=207
-
-		self.upper_mask = numpy.array([ 100, 255, 255 ]) #Set Upper Color of Range Here for Main Target
-		self.lower_mask = numpy.array([ 65, 0, 230 ]) #Set Lower Color of Range Here for Main Target
-
-		self.upper_mask_tape = numpy.array([ 40, 200, 255 ]) #Set Upper Color of Range Here for tape on Arm
-		self.lower_mask_tape = numpy.array([ 1, 100, 10 ])#Set lower Color of Range Here for tape on Arm
+		self.upper_mask = numpy.array([ 100, 255, 255 ]) #Set Upper Color of Range Here
+		self.lower_mask = numpy.array([ 40, 0, 230 ]) #Set Lower Color of Range Here
 
 		# Get image from the camera
 		self.image_sub = rospy.Subscriber("usb_cam/image_raw", Image, self.process_image)
@@ -33,10 +25,6 @@ class ImageProcessor:
 
 		# Send position of the cargo
 		self.cargo_point_pub = rospy.Publisher("cargo_point", Point, queue_size=10)
-		self.arm_point_pub = rospy.Publisher("arm_point", Point, queue_size=10)
-
-		self.arm_status_publisher=rospy.Publisher("arm_status", String, queue_size=1)
-
 
 		# Image processing
 		self.bridge = cv_bridge.CvBridge()
@@ -45,6 +33,14 @@ class ImageProcessor:
 		# Pixel dimensions of image
 		self.width_pixels = rospy.get_param("~width_pixels", 640)
 		self.height_pixels = rospy.get_param("~height_pixels", 480)
+
+		# Physical dimensions captured by image in meters
+		width_phys = rospy.get_param("~width_phys", 0.228)
+		height_phys = rospy.get_param("~height_phys", 0.181)
+
+		# Convert pixels to physical dimensions
+		self.width_ratio = width_phys / self.width_pixels 
+		self.height_ratio = height_phys / self.height_pixels 
 
 		# z distance from arm at "home" position to the box
 		self.arm_z = rospy.get_param("~arm_z", -0.14)
@@ -68,37 +64,8 @@ class ImageProcessor:
 			# Get image
 			image = self.bridge.imgmsg_to_cv2(msg)
 
-
-			#Second Color Mask for Arm Position:
-			hsv2 = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-
-			mask2 = cv2.inRange(hsv2, self.lower_mask_tape, self.upper_mask_tape)
-			
-			# Remove noise from mask
-			mask2 = cv2.morphologyEx(mask2, cv2.MORPH_CLOSE, self.kernel)
-			mask2= cv2.morphologyEx(mask2, cv2.MORPH_OPEN, self.kernel)
-
-			# Perform filtering
-			masked2 = cv2.bitwise_and(image, image, mask=mask2)
-			masked2 = cv2.cvtColor(masked2, cv2.COLOR_HSV2BGR)
-			masked2 = cv2.cvtColor(masked2, cv2.COLOR_RGB2GRAY)
-
-			# Compute the centroid
-			M2 = cv2.moments(masked2)
-
-			x_pixels2=0
-			y_pixels2=0
-			if M2['m00'] != 0:
-
-				# Compute centroid
-				x_pixels2=int(M2["m10"]/M2["m00"])
-				y_pixels2 = int(M2['m01']/M2['m00'])
-	
-				self.arm_point_pub.publish(Point(x_pixels2, y_pixels2, self.arm_z))
-			else:
-				print("Arm is not in view")
-
 			#We dont want the extra area around the arm on the camera, so we mask it with 3 rectanlges
+		
 			#adding first rectangle (Left Side)
 			croppedimage=image
 			startpoint=(0,0)
@@ -108,6 +75,7 @@ class ImageProcessor:
 			croppedimage=cv2.rectangle(croppedimage,startpoint,endpoint,color,thickness)
 
 			#adding second rectangle (Top)
+			croppedimage=image
 			startpoint=(0,0)
 			endpoint=(1000,130)
 			color=(0,0,0)
@@ -115,6 +83,7 @@ class ImageProcessor:
 			croppedimage=cv2.rectangle(croppedimage,startpoint,endpoint,color,thickness)
 
 			#adding third rectangle (Right Side)
+			croppedimage=image
 			startpoint=(495,0)
 			endpoint=(1000,1000)
 			color=(0,0,0)
@@ -138,8 +107,6 @@ class ImageProcessor:
 			# Compute the centroid
 			M = cv2.moments(masked)
 
-			x_pixels=0
-			y_pixels=0
 			# If a centroid can be found, the cargo is in view
 			if M['m00'] != 0:
 
@@ -147,25 +114,24 @@ class ImageProcessor:
 				x_pixels = int(M['m10']/M['m00'])
 				y_pixels = int(M['m01']/M['m00'])
 
+				# Compute physical x/y coordinates
+				x = x_pixels*self.width_ratio
+				y = y_pixels*self.height_ratio
+
+
+				if(x_pixels>354): #354 is the aprox pixel location of the middle of the screen
+					y=-y #Inverts the y coordinate if it needs to be negative
+
 				# Publish the position of the cargo box
-				self.cargo_point_pub.publish(Point(x_pixels, y_pixels, self.arm_z))
+				self.cargo_point_pub.publish(Point(x, y, self.arm_z))
 
 			else:
-				# Cargo is not in view, publish an invalid string
+				# Cargo is not in view, publish an invalid z
+				self.cargo_point_pub.publish(Point(0, 0, 10)) #CHANGE
 
-				# self.sleep_publisher.publish(True)
-				self.arm_status_publisher.publish("invalid")
-				# self.alien_state=False
-
-			startpoint=(int(x_pixels2),int(y_pixels2))
-			endpoint=(int(x_pixels),int(y_pixels))
-			color=(255,0,0)
-			thickness=3
-			image2=cv2.rectangle(image,startpoint,endpoint,color,thickness)
-
-			cv2.imshow("Increment Image", image2)
+			# cv2.imshow("image", masked)
 			cv2.waitKey(3)
-
+			
 
 rospy.init_node("arm_cam")
 image_processor = ImageProcessor()
