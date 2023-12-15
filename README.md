@@ -1,32 +1,44 @@
-# Cargo Claw
+# Arm Cam
+The new and improved method for working with the PX-100 arm in the Autonomous Robotics Lab at Brandeis University
 
-### Members
+### For help
 
 Benjamin Blinder, [benjaminblinder@brandeis.edu](mailto:benjaminblinder@brandeis.edu)
 
-Ken Kirio, [kenkirio@brandeis.edu](mailto:kenkirio@brandeis.edu)
-
-Vibhu Singh, [vibhusingh@brandeis.edu](mailto:kenkirio@brandeis.edu)
-
 ## Summary
 
-Coordinate a stationary arm robot and a platform robot to load and unload cargo autonomously. A person will be able to press a button to inform the robot to go to the arm, which will load/unload a piece of cargo.
+The PX-100 Arm was a nightmare to use. This project aims to simplify and standardize the useage of the arm. It assumes that you are still using the large rig setup with a webcam in the green holder, and the arm screwed onto the base. It also assumes you are using a computer that has been properly set up with Ubuntu 20.04.6 and both the arm and camera are connected to the laptop
 
-## Demonstration
+# How To Use
 
-The platform robot will start in a randomized location in the room. After determining its location on a premade map, the robot will maneuver itself to the loading zone, where a person will place an object on top of the robot. A person will press a button on their computer, prompting the robot to leave the loading zone and travel to the arm. Once the robot arrives, the arm will remove the robot's current cargo and place it next to itself, and then place a new piece of cargo onto the platform robot. Then the platform robot will return to its loading zone and again await a person to once again press a button on their computer, prompting the robot to return to the arm robot, which will offload the cargo. This cycle can be repeated as long as someone presses the button to tell it to make another round.
+## Setup
 
-## Learning Objectives
+### Step 1: Configuring the Laptop
+If you are in the lab, make sure to use either of the laptops that are marked with pink tape and say "Works with the arm." 
+If you use on of these arms, skip the "Running the Code" Section.
 
-- Mapping: building a map, localization on a premade map
-- Image processing & fiducials
-- Communication between multiple robots
-- Using robots to manipulate other objects
-- Coordination with robots not natively made for ROS
+If you want to setup a new laptop for use with the arm, here is the cliff notes version of the setup:
+>[!WARNING]
+>I would highly recommend using one of the already working laptops. Some laptops simply do not have compatible hardware with the PX-100 arm and therefore will not work, and you will not know this until you've already spent hours setting up the laptop.
+That being said, the issue with hardware compatibility can be fixed by replacing the U2D2 Controller in the arm with a new one from Trossen Robotics. 
 
-## Evaluation Criteria
+1. Install **Ubuntu 20.04.6**
+This is the only version that I know for sure works, but other versions of 20.04 might work.
 
-- Success at picking up/putting down an object with the arm
-  - Placing the object in the correct location (i.e. on the platform robot)
-- Precision of movement between loading/unloading zones
-- Coordination between platform and arm robots so that each one acts at the proper time
+2. Install **Ros Noetic**
+
+3. Install pip
+
+4. Using pip, run this command in terminal:
+```
+pip install tk
+```
+5. Install the Interbotix Workspace
+
+6. Clone the rosutils repo
+
+7. Correctly set up the Bashrc file with the template from the rosutils
+
+8. Change Line 11 in control_arm.py to match the path to the interbotix workspace on your laptop
+
+

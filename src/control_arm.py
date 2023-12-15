@@ -8,8 +8,8 @@ from std_msgs.msg import Bool, String, Float32
 
 # if your paths are messed up and not recognizing the interbotix_ws, 
 # then you can use this to get the directory working with this file
-sys.path.insert(0, '/ros-lab/interbotix_ws/')
-# sys.path.insert(0, '/my_ros_data/interbotix_ws/')
+sys.path.insert(0, '/ros-lab/interbotix_ws/') #THIS PATH WORKS ON TKINKPAD TWO
+# sys.path.insert(0, '/my_ros_data/interbotix_ws/') #THIS PATH WORKS ON THE OLDER THINKPAD
 
 
 class ArmControl():
