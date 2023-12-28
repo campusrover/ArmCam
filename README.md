@@ -88,3 +88,21 @@ In the live color testing window, the program pulls up a live view of the binary
 
 Color arrays are set in RGB values, the upper array is the brighter value that can be seen, and the lower array is the darker value. These can be adjusted live, **but to save any changes to the color detection, you must change the arrays saved on lines 13 and 14 of color_mask_test.py (Which is only used during the live testing).**
 > This will not change the colors used in picking up an object automatically unless you also change the chosen color arrays in the arm_cam.py file, lines 17 to 21.
+
+## Tour of included files:
+* arm_command.launch
+    * This is the launch command to open the program.
+* arm_cam.py
+    * A rospy file that deals with the camera directly. This processes the image and sends the coordinates to the box_pickup.py file.
+* box_pickup.py
+    * This deals with the logic for picking up an object. It sends commands to the control_arm.py file.
+* control_arm.py
+    * This is the file that sends commands to the arm itself. You publish messages here and it deals with the Interbotix workspace to control the arm.
+* arm_GUI.py
+    * This is the GUI that helps to control the arm.
+* color_mask_test.py
+    * This file is only launched from the GUI when using the live color testing mode in the GUI.
+* TKExample.py
+    * This is the same as the standard GUI but can be launched without ROS installed so you can test the GUI to ensure it works before adding it to the real GUI.
+* send_command.py
+    * This is a backup. If you break the GUI, running this file allows you to have some basic control over the arm through a terminal.
