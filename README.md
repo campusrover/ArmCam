@@ -13,6 +13,8 @@ The PX-100 Arm was a nightmare to use. This project aims to simplify and standar
 
 ## Setup
 
+Make sure you have the arm placed correctly on the base of the rig, with a camera placed in the green holder above it. This code might work in other settings, but I would **insist** upon using the rig I built for it. 
+
 If you are in the lab, make sure to use either of the laptops that are marked with pink tape and say "Works with the arm." 
 If you use on of these arms, skip the "Running the Code" Section.
 
@@ -44,7 +46,9 @@ pip install tk
 
 10. Connect the camera to a second usb port on the laptop.
 
-11. Open a terminal and type the following command to start the program:
+11. Clone this repo into the Catkin Workspace on your laptop, and run the catkin make command.
+
+12. Open a terminal and type the following command to start the program:
 ```
 roslaunch armcam arm_command.launch
 ```
